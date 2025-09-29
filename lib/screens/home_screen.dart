@@ -1,7 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:treasure_hunt/services/auth_service.dart';
+import 'package:treasure_hunt/services/hunt_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _getOngoingHunts();
+  }
+
+  Future<void> _getOngoingHunts() async {
+    try {
+      final huntService = HuntService();
+      final response = await huntService.getHunts();
+      final hunts = response;
+      print('Fetched hunts: $hunts'); // Parse the response to get hunts
+    } catch (e) {
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,39 +102,57 @@ class HomeScreen extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        image: DecorationImage(
-                          image: NetworkImage(hunt["image"] as String),
-                          fit: BoxFit.cover,
-                          colorFilter: ColorFilter.mode(
-                            Colors.black.withOpacity(0.4),
-                            BlendMode.darken,
-                          ),
-                        ),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.map,
-                                size: 40, color: Colors.tealAccent),
-                            const SizedBox(height: 10),
-                            Text(
-                              hunt["title"] as String,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                              textAlign: TextAlign.center,
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            hunt["image"] as String,
+                            fit: BoxFit.cover,
+                            color: Colors.black.withOpacity(0.4),
+                            colorBlendMode: BlendMode.darken,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.broken_image,
+                                  size: 48, color: Colors.grey),
                             ),
-                            const SizedBox(height: 5),
-                            Text(
-                              "${hunt["clues"]} clues",
-                              style: const TextStyle(color: Colors.white70),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                    child: CircularProgressIndicator()),
+                              );
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.map,
+                                    size: 40, color: Colors.tealAccent),
+                                const SizedBox(height: 10),
+                                Text(
+                                  hunt["title"] as String,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "${hunt["clues"]} clues",
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -132,7 +174,8 @@ class HomeScreen extends StatelessWidget {
             ),
 
             // TODO: Add your upcoming hunts list/grid here
-            const SizedBox(height: 200, child: Center(child: Text("Coming soon..."))),
+            const SizedBox(
+                height: 200, child: Center(child: Text("Coming soon..."))),
           ],
         ),
       ),
